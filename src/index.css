@@ -1,0 +1,14 @@
+.video-container {
+  position: relative;
+  width: 500px;
+}
+
+.vid {
+  width: 100%;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
