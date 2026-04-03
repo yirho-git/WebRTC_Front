@@ -2,10 +2,12 @@ import React, { useEffect, useRef } from 'react'
 import { connectSocket, sendMessage } from '../services/socket'
 import { createPeerConnection } from '../hooks/useWebRTC'
 
-export default function VideoChat({ userId }) {
+export default function VChat({ userId }) {
   const socketRef = useRef(null); // 소켓을 담을 ref생성 (소켓은 지속적으로 내부데이터가 변화하기 때문에 렌더링에 영향주지않는 ref로 담음)
   const myVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
   const pcRef = useRef(null); // peerConnection(상대방과 연결 통로) 담을 ref 생성
+  const targetIdRef = useRef("user2");
 
   // 웹소켓 연결
   useEffect(() => {
@@ -38,6 +40,10 @@ export default function VideoChat({ userId }) {
 
         // 상대 answer 적용
         await pcRef.current.setRemoteDescription(data.answer);
+      }else if(data.type === "candidate"){
+        console.log("candidate 받음");
+
+        await pcRef.current.addIceCandidate(data.candidate);
       }
     });
   }, [userId]);  // userId가 바뀌면 리렌더링
@@ -58,9 +64,15 @@ export default function VideoChat({ userId }) {
         pcRef.current = createPeerConnection(
           (candidate) => {
             console.log("ICE: ", candidate);  // onIceCandidate 콜백함수 실행시 리턴값 로그
+            sendMessage({
+              type : "candidate",
+              candidate,  // 연결 가능한 ICE 후보 정보
+              to : targetIdRef.current // 상대 ID
+            })
           },
           (remoteStream) => {
             console.log("remote stream: ", remoteStream)   // onTrack 콜백함수 리턴값 로그
+            remoteVideoRef.current.srcObject = remoteStream;
           }
         )
 
@@ -120,10 +132,16 @@ export default function VideoChat({ userId }) {
   return (
     <>
       <div>
-        <h2>VideoChat</h2>
+        <h2>VChat</h2>
         <p>내 userId: {userId}</p>
 
         <video ref={myVideoRef}
+          autoPlay
+          playsInline
+          muted
+          width={"300"} />
+        <button onClick={createOffer}>통화 시작</button>
+        <video ref={remoteVideoRef}
           autoPlay
           playsInline
           muted

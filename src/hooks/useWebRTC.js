@@ -21,9 +21,14 @@ export function createPeerConnection(onIceCandidate, onTrack) {
          제일 먼저 성공한 연결을 사용.
          *조합 : 내후보 * 상대후보 = 연결시도
   */
-  // ICE후보들 중 연결 가능한 IP로 연결한다
-  pc.onicecandidate = (event) => {    
-    if (event.candidate) {  // 연결이 성공시
+
+  // 연결 후보를 찾는다 => 연결 후보를 찾거나 수집완료가 되면 event 실행
+  //                   => 연결 후보를 찾으면 event.candidate에 담음
+  //                   => 다 뒤져도 연결 후보가 없으면 null을 담음
+  // 
+  pc.onicecandidate = (event) => {    // onicecandidate :: RTCPeerConnection 의 이벤트 핸들러 속성
+    // 연결 가능 후보를 찾으면 event가 발생 
+    if (event.candidate) {  
       onIceCandidate(event.candidate);  // onIceCandidate 콜백함수 실행
     }
   };
